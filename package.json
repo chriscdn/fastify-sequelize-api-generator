@@ -1,0 +1,16 @@
+{
+  "name": "@chriscdn/fastify-sequelize-api-generator",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "license": "MIT",
+  "dependencies": {
+    "sequelize-json-schema": "^2.1.1"
+  },
+  "peerDependencies": {
+    "fastify": "^3.27.4",
+    "sequelize": "^6.17.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.11.0"
+  }
+}
