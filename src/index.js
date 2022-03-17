@@ -29,6 +29,13 @@ const FastifySequelizeAPI = ({
   performCreate = async (request, instance) => instance.save(),
   performUpdate = async (request, instance) => instance.save(),
   performDestroy = async (request, instance) => instance.destroy(),
+  descriptions = {
+    LIST: 'Fetch instances.',
+    RETRIEVE: 'Retrieve an instance.',
+    CREATE: 'Create a new instance.',
+    UPDATE: 'Update an instance.',
+    DESTROY: 'Destroy an instance.',
+  },
 }) => {
   // console.assert(prefix, 'prefix is required.')
   console.assert(fastify, 'fastify instance is required.')
@@ -74,7 +81,6 @@ const FastifySequelizeAPI = ({
   const _preHandler = [
     ...preHandler,
     async (request, reply) => {
-      debugger
       if (await hasPermission(request)) {
         if (['POST'].includes(request.method)) {
           // pass
@@ -108,6 +114,7 @@ const FastifySequelizeAPI = ({
     fastify.get(prefix, {
       schema: {
         tags,
+        description: descriptions.RETRIEVE,
         params,
         response: {
           200: responseSchema,
@@ -115,7 +122,7 @@ const FastifySequelizeAPI = ({
         },
       },
       preHandler: _preHandler,
-      handler: async (request, reply) => {
+      async handler(request, reply) {
         const instance = request.instance
         reply.code(200).send(instance)
       },
@@ -126,7 +133,7 @@ const FastifySequelizeAPI = ({
     fastify.get(prefix, {
       schema: {
         tags,
-        // how to make this dynamic?
+        description: descriptions.LIST,
         params,
         response: {
           200: { type: 'array', items: responseSchema },
@@ -134,7 +141,7 @@ const FastifySequelizeAPI = ({
         },
       },
       preHandler: _preHandlerList,
-      handler: async (request, reply) => {
+      async handler(request, reply) {
         reply.code(200).send(request.instances)
       },
     })
@@ -144,6 +151,8 @@ const FastifySequelizeAPI = ({
     fastify.post(prefix, {
       schema: {
         tags,
+        description: descriptions.CREATE,
+
         params,
         body: postBodySchema,
         response: {
@@ -151,7 +160,7 @@ const FastifySequelizeAPI = ({
         },
       },
       preHandler: _preHandler,
-      handler: async (request, reply) => {
+      async handler(request, reply) {
         // build does not save
         const instance = await Model.build(request.body)
 
@@ -166,6 +175,7 @@ const FastifySequelizeAPI = ({
     fastify.patch(prefix, {
       schema: {
         tags,
+        description: descriptions.UPDATE,
         params,
         body: patchBodySchema,
         response: {
@@ -174,7 +184,7 @@ const FastifySequelizeAPI = ({
       },
       preHandler: _preHandler,
 
-      handler: async (request, reply) => {
+      async handler(request, reply) {
         const instance = request.instance
 
         Object.assign(instance, request.body)
@@ -188,6 +198,7 @@ const FastifySequelizeAPI = ({
     fastify.put(prefix, {
       schema: {
         tags,
+        description: descriptions.UPDATE,
         params,
         body: putBodySchema,
         response: {
@@ -196,7 +207,7 @@ const FastifySequelizeAPI = ({
       },
       preHandler: _preHandler,
 
-      handler: async (request, reply) => {
+      async handler(request, reply) {
         const instance = request.instance
 
         Object.assign(instance, request.body)
@@ -212,6 +223,7 @@ const FastifySequelizeAPI = ({
     fastify.delete(prefix, {
       schema: {
         tags,
+        description: descriptions.DESTROY,
         params,
         response: {
           200: {},
@@ -219,7 +231,7 @@ const FastifySequelizeAPI = ({
       },
       preHandler: _preHandler,
 
-      handler: async (request, reply) => {
+      async handler(request, reply) {
         const instance = request.instance
         await performDestroy(request, instance)
         reply.code(200).send()
