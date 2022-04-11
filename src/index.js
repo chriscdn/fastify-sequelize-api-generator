@@ -21,7 +21,10 @@ const FastifySequelizeAPI = ({
   preHandler = [],
   hasPermission = async (_request, _instance) => true,
   hasObjectPermission = async (_request, _instance) => true,
-  getObject = async (request) => Model.findByPk(request.params.id), // assumes id
+  lookupField = 'id',
+  lookupUrlParam = 'id',
+  getObject = async (request) =>
+    Model.findOne({ where: { [lookupField]: request.params[lookupUrlParam] } }), // assumes id
   getObjects = async (_request) => Model.findAll(),
   tags = [],
   excludeOnResponse = [],
@@ -84,7 +87,7 @@ const FastifySequelizeAPI = ({
       if (await hasPermission(request)) {
         if (['POST'].includes(request.method)) {
           // pass
-        } else {
+        } else if (request.params[lookupUrlParam]) {
           const instance = await getObject(request)
 
           if (instance) {
@@ -96,6 +99,8 @@ const FastifySequelizeAPI = ({
           } else {
             reply.code(404).send()
           }
+        } else {
+          // do nothing
         }
       } else {
         reply.code(401).send()
@@ -104,7 +109,7 @@ const FastifySequelizeAPI = ({
   ]
 
   const _preHandlerList = [
-    ...preHandler,
+    ..._preHandler,
     async (request, _reply) => {
       request.instances = await getObjects(request)
     },
