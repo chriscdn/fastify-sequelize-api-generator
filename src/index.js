@@ -19,7 +19,7 @@ const FastifySequelizeAPI = ({
   Model,
   genericView,
   preHandler = [],
-  hasPermission = async (_request, _instance) => true,
+  hasPermission = async (_request) => true,
   hasObjectPermission = async (_request, _instance) => true,
   lookupField = 'id',
   lookupUrlParam = 'id',
