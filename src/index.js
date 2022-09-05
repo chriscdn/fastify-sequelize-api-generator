@@ -92,8 +92,7 @@ const FastifySequelizeAPI = ({
       if (await hasPermission(request)) {
         if (['POST'].includes(request.method)) {
           // pass
-        } else {
-          // if (request.params[lookupUrlParam]) {
+        } else if (request.params[lookupUrlParam]) {
           const instance = await getObject(request)
 
           if (instance) {
