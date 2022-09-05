@@ -24,7 +24,11 @@ const FastifySequelizeAPI = ({
   lookupField = 'id',
   lookupUrlParam = 'id',
   getObject = async (request) =>
-    Model.findOne({ where: { [lookupField]: request.params[lookupUrlParam] } }), // assumes id
+    Model.findOne({
+      where: {
+        [lookupField]: request.params[lookupUrlParam],
+      },
+    }), // assumes id
   getObjects = async (_request) => Model.findAll(),
   tags = [],
   excludeOnResponse = [],
@@ -67,6 +71,7 @@ const FastifySequelizeAPI = ({
   const responseSchema = sjs.getModelSchema(Model, {
     useRefs: false,
     exclude: excludeOnResponse,
+    // attributes: ['public'],
   })
 
   // console.log(responseSchema)
@@ -87,7 +92,8 @@ const FastifySequelizeAPI = ({
       if (await hasPermission(request)) {
         if (['POST'].includes(request.method)) {
           // pass
-        } else if (request.params[lookupUrlParam]) {
+        } else {
+          // if (request.params[lookupUrlParam]) {
           const instance = await getObject(request)
 
           if (instance) {
@@ -99,8 +105,6 @@ const FastifySequelizeAPI = ({
           } else {
             reply.code(404).send()
           }
-        } else {
-          // do nothing
         }
       } else {
         reply.code(401).send()
