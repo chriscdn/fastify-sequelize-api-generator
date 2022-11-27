@@ -1,9 +1,10 @@
 {
   "name": "@chriscdn/fastify-sequelize-api-generator",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "main": "src/index.js",
   "license": "MIT",
   "dependencies": {
+    "change-case": "^4.1.2",
     "sequelize-json-schema": "^2.1.1"
   },
   "peerDependencies": {

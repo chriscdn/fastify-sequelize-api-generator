@@ -1,4 +1,5 @@
 const sjs = require('sequelize-json-schema')
+const { camelCase } = require('change-case')
 
 const FastifySequelizeGenericViews = Object.freeze({
   ListAPIView: ['LIST'],
@@ -122,6 +123,7 @@ const FastifySequelizeAPI = ({
     fastify.get(prefix, {
       schema: {
         tags,
+        operationId: camelCase(`get ${Model.name}`),
         description: descriptions.RETRIEVE,
         params,
         response: {
@@ -141,6 +143,7 @@ const FastifySequelizeAPI = ({
     fastify.get(prefix, {
       schema: {
         tags,
+        operationId: camelCase(`get ${Model.name}s`),
         description: descriptions.LIST,
         params,
         response: {
@@ -159,8 +162,8 @@ const FastifySequelizeAPI = ({
     fastify.post(prefix, {
       schema: {
         tags,
+        operationId: camelCase(`post ${Model.name}`),
         description: descriptions.CREATE,
-
         params,
         body: postBodySchema,
         response: {
@@ -183,6 +186,7 @@ const FastifySequelizeAPI = ({
     fastify.patch(prefix, {
       schema: {
         tags,
+        operationId: camelCase(`patch ${Model.name}`),
         description: descriptions.UPDATE,
         params,
         body: patchBodySchema,
@@ -206,6 +210,7 @@ const FastifySequelizeAPI = ({
     fastify.put(prefix, {
       schema: {
         tags,
+        operationId: camelCase(`put ${Model.name}`),
         description: descriptions.UPDATE,
         params,
         body: putBodySchema,
@@ -231,6 +236,7 @@ const FastifySequelizeAPI = ({
     fastify.delete(prefix, {
       schema: {
         tags,
+        operationId: camelCase(`delete ${Model.name}`),
         description: descriptions.DESTROY,
         params,
         response: {
