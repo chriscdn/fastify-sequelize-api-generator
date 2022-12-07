@@ -1,5 +1,93 @@
 const sjs = require('sequelize-json-schema')
-const { camelCase } = require('change-case')
+const { camelCase, pascalCase } = require('change-case')
+const get = require('lodash.get')
+/**
+ *
+ * @param {*} Model
+ * @param {(''|'post'|'patch')} variation
+ */
+function FastifyGetSchemaName(Model, variation = '') {
+  return pascalCase(`${Model.name} ${variation}`)
+}
+
+/**
+ * This adds three schemas to the fastify instance:
+ *
+ * - <ModelName>Post - For POSTing and PUTing.
+ * - <ModelName>Patch - Same as the POST variant, with "required" fields removed.
+ * - <ModelName>Out - For GET.
+ *
+ * See here: https://swagger.io/docs/specification/data-models/data-types/
+ *
+ * @param {object} param0
+ * @param {object} param0.fastify
+ * @param {object} param0.Model
+ * @param {object} param0.exclude
+ * @param {object} param0.readOnly
+ * @param {object} param0.writeOnly
+ */
+function FastifyAddModelSchema({
+  fastify,
+  Model,
+  exclude = [],
+  readOnly = [],
+  writeOnly = [],
+}) {
+  const schemaNameOut = FastifyGetSchemaName(Model, '')
+  const schemaNamePost = FastifyGetSchemaName(Model, 'post')
+  const schemaNamePatch = FastifyGetSchemaName(Model, 'patch')
+
+  const schemaGet = fastify.getSchema(schemaNameOut)
+  const schemaPost = fastify.getSchema(schemaNamePost)
+  const schemaPatch = fastify.getSchema(schemaNamePatch)
+
+  if (schemaGet && schemaPost && schemaPatch) {
+    // already exists, do nothing
+  } else {
+    const schema = sjs.getModelSchema(Model, {
+      useRefs: false,
+      exclude,
+    })
+
+    const _readOnly = ['id', 'createdAt', 'updatedAt', ...readOnly]
+    const _writeOnly = [...writeOnly]
+
+    const outProperties = {}
+    const inProperties = {}
+
+    Object.entries(schema.properties).forEach(([key, value]) => {
+      value.description = get(Model, ['fieldRawAttributesMap', key, 'comment'])
+
+      if (!_readOnly.includes(key) && !writeOnly.includes(key)) {
+        outProperties[key] = value
+        inProperties[key] = value
+      } else if (_readOnly.includes(key)) {
+        outProperties[key] = value
+      } else if (_writeOnly.includes(key)) {
+        inProperties[key] = value
+      }
+    })
+
+    fastify.addSchema({
+      ...schema,
+      $id: schemaNameOut,
+      properties: outProperties,
+    })
+
+    fastify.addSchema({
+      ...schema,
+      $id: schemaNamePost,
+      properties: inProperties,
+    })
+
+    fastify.addSchema({
+      ...schema,
+      $id: schemaNamePatch,
+      properties: inProperties,
+      required: [],
+    })
+  }
+}
 
 const FastifySequelizeGenericViews = Object.freeze({
   ListAPIView: ['LIST'],
@@ -32,8 +120,8 @@ const FastifySequelizeAPI = ({
     }), // assumes id
   getObjects = async (_request) => Model.findAll(),
   tags = [],
-  excludeOnResponse = [],
-  excludeOnCreateUpdate = [],
+  // excludeOnResponse = [],
+  // excludeOnCreateUpdate = [],
   performCreate = async (request, instance) => instance.save(),
   performUpdate = async (request, instance) => instance.save(),
   performDestroy = async (request, instance) => instance.destroy(),
@@ -50,42 +138,42 @@ const FastifySequelizeAPI = ({
   console.assert(Model, 'Model is required.')
   console.assert(genericView, 'genericView is required.')
 
-  // const _params = {
-  //   type: 'object',
-  //   properties: Object.entries(params).reduce((a, [key, type]) => {
-  //     a[key] = {
-  //       type,
-  //     }
-  //     return a
-  //   }, {}),
-  //   required: Object.keys(params),
-  // }
-
   // These fields are managed automatically and have no place in a create/update body.
-  const _excludeOnCreateUpdate = [
-    'id',
-    'createdAt',
-    'updatedAt',
-    ...excludeOnCreateUpdate,
-  ]
+  // const _excludeOnCreateUpdate = [
+  //   'id',
+  //   'createdAt',
+  //   'updatedAt',
+  //   ...excludeOnCreateUpdate,
+  // ]
 
-  const responseSchema = sjs.getModelSchema(Model, {
-    useRefs: false,
-    exclude: excludeOnResponse,
-    // attributes: ['public'],
-  })
+  // const responseSchema = sjs.getModelSchema(Model, {
+  //   useRefs: false,
+  //   exclude: excludeOnResponse,
+  //   // attributes: ['public'],
+  // })
 
-  // console.log(responseSchema)
-  const postBodySchema = sjs.getModelSchema(Model, {
-    useRefs: false,
-    exclude: _excludeOnCreateUpdate,
-  })
+  const responseSchema = {
+    $ref: FastifyGetSchemaName(Model, ''),
+  }
+
+  // const postBodySchema = sjs.getModelSchema(Model, {
+  //   useRefs: false,
+  //   exclude: _excludeOnCreateUpdate,
+  // })
+
+  const postBodySchema = {
+    $ref: FastifyGetSchemaName(Model, 'post'),
+  }
 
   const putBodySchema = { ...postBodySchema }
 
   // shallow copy with `required` key removed
-  const patchBodySchema = { ...putBodySchema }
-  delete patchBodySchema['required']
+  const patchBodySchema = {
+    $ref: FastifyGetSchemaName(Model, 'patch'),
+  }
+
+  // in the patch variant already
+  // delete patchBodySchema['required']
 
   const _preHandler = [
     ...preHandler,
@@ -255,6 +343,8 @@ const FastifySequelizeAPI = ({
 }
 
 module.exports = {
+  FastifyAddModelSchema,
   FastifySequelizeGenericViews,
   FastifySequelizeAPI,
+  FastifyGetSchemaName,
 }
