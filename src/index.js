@@ -72,12 +72,18 @@ function FastifyAddModelSchema({
       ...schema,
       $id: schemaNameOut,
       properties: outProperties,
+      required: (schema.required ?? []).filter((item) =>
+        Object.keys(outProperties).includes(item)
+      ),
     })
 
     fastify.addSchema({
       ...schema,
       $id: schemaNamePost,
       properties: inProperties,
+      required: (schema.required ?? []).filter((item) =>
+        Object.keys(inProperties).includes(item)
+      ),
     })
 
     fastify.addSchema({
@@ -120,23 +126,38 @@ const FastifySequelizeAPI = ({
     }), // assumes id
   getObjects = async (_request) => Model.findAll(),
   tags = [],
-  // excludeOnResponse = [],
-  // excludeOnCreateUpdate = [],
-  performCreate = async (request, instance) => instance.save(),
-  performUpdate = async (request, instance) => instance.save(),
-  performDestroy = async (request, instance) => instance.destroy(),
-  descriptions = {
-    LIST: 'Fetch instances.',
-    RETRIEVE: 'Retrieve an instance.',
-    CREATE: 'Create a new instance.',
-    UPDATE: 'Update an instance.',
-    DESTROY: 'Destroy an instance.',
-  },
+  descriptions = {},
+  operationIds = {},
+  performCreate = async (request, instance) => await instance.save(),
+  performUpdate = async (request, instance) => await instance.save(),
+  performDestroy = async (request, instance) => await instance.destroy(),
+
+  // This is automatically wrapped in an `type: 'array'` if the response is a list.
+  responseSchema = null,
 }) => {
   // console.assert(prefix, 'prefix is required.')
   console.assert(fastify, 'fastify instance is required.')
   console.assert(Model, 'Model is required.')
   console.assert(genericView, 'genericView is required.')
+
+  const operationIdsResolved = {
+    RETRIEVE: camelCase(`get ${Model.name}`),
+    LIST: camelCase(`get ${Model.name}s`),
+    CREATE: camelCase(`post ${Model.name}`),
+    UPDATE_PATCH: camelCase(`patch ${Model.name}`),
+    UPDATE_PUT: camelCase(`put ${Model.name}`),
+    DESTROY: camelCase(`delete ${Model.name}`),
+    ...operationIds,
+  }
+
+  const descriptionsResolved = {
+    LIST: 'Fetch instances.',
+    RETRIEVE: 'Retrieve an instance.',
+    CREATE: 'Create a new instance.',
+    UPDATE: 'Update an instance.',
+    DESTROY: 'Destroy an instance.',
+    ...descriptions,
+  }
 
   // These fields are managed automatically and have no place in a create/update body.
   // const _excludeOnCreateUpdate = [
@@ -146,13 +167,13 @@ const FastifySequelizeAPI = ({
   //   ...excludeOnCreateUpdate,
   // ]
 
-  // const responseSchema = sjs.getModelSchema(Model, {
+  // const responseSchemaResolved = sjs.getModelSchema(Model, {
   //   useRefs: false,
   //   exclude: excludeOnResponse,
   //   // attributes: ['public'],
   // })
 
-  const responseSchema = {
+  const responseSchemaResolved = responseSchema ?? {
     $ref: FastifyGetSchemaName(Model, ''),
   }
 
@@ -211,11 +232,11 @@ const FastifySequelizeAPI = ({
     fastify.get(prefix, {
       schema: {
         tags,
-        operationId: camelCase(`get ${Model.name}`),
-        description: descriptions.RETRIEVE,
+        operationId: operationIdsResolved.RETRIEVE,
+        description: descriptionsResolved.RETRIEVE,
         params,
         response: {
-          200: responseSchema,
+          200: responseSchemaResolved,
           403: {},
         },
       },
@@ -231,11 +252,11 @@ const FastifySequelizeAPI = ({
     fastify.get(prefix, {
       schema: {
         tags,
-        operationId: camelCase(`get ${Model.name}s`),
-        description: descriptions.LIST,
+        operationId: operationIdsResolved.LIST,
+        description: descriptionsResolved.LIST,
         params,
         response: {
-          200: { type: 'array', items: responseSchema },
+          200: { type: 'array', items: responseSchemaResolved },
           403: {},
         },
       },
@@ -250,12 +271,12 @@ const FastifySequelizeAPI = ({
     fastify.post(prefix, {
       schema: {
         tags,
-        operationId: camelCase(`post ${Model.name}`),
-        description: descriptions.CREATE,
+        operationId: operationIdsResolved.CREATE,
+        description: descriptionsResolved.CREATE,
         params,
         body: postBodySchema,
         response: {
-          201: responseSchema,
+          201: responseSchemaResolved,
         },
       },
       preHandler: _preHandler,
@@ -274,12 +295,12 @@ const FastifySequelizeAPI = ({
     fastify.patch(prefix, {
       schema: {
         tags,
-        operationId: camelCase(`patch ${Model.name}`),
-        description: descriptions.UPDATE,
+        operationId: operationIdsResolved.UPDATE_PATCH,
+        description: descriptionsResolved.UPDATE,
         params,
         body: patchBodySchema,
         response: {
-          200: responseSchema,
+          200: responseSchemaResolved,
         },
       },
       preHandler: _preHandler,
@@ -298,12 +319,12 @@ const FastifySequelizeAPI = ({
     fastify.put(prefix, {
       schema: {
         tags,
-        operationId: camelCase(`put ${Model.name}`),
-        description: descriptions.UPDATE,
+        operationId: operationIdsResolved.UPDATE_PUT,
+        description: descriptionsResolved.UPDATE,
         params,
         body: putBodySchema,
         response: {
-          200: responseSchema,
+          200: responseSchemaResolved,
         },
       },
       preHandler: _preHandler,
@@ -324,8 +345,8 @@ const FastifySequelizeAPI = ({
     fastify.delete(prefix, {
       schema: {
         tags,
-        operationId: camelCase(`delete ${Model.name}`),
-        description: descriptions.DESTROY,
+        operationId: operationIdsResolved.DESTROY,
+        description: descriptionsResolved.DESTROY,
         params,
         response: {
           200: {},
@@ -335,8 +356,12 @@ const FastifySequelizeAPI = ({
 
       async handler(request, reply) {
         const instance = request.instance
-        await performDestroy(request, instance)
-        reply.code(200).send()
+        try {
+          await performDestroy(request, instance)
+          reply.code(200).send()
+        } catch (e) {
+          reply.code(400).send(e)
+        }
       },
     })
   }

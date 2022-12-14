@@ -1,6 +1,6 @@
 {
   "name": "@chriscdn/fastify-sequelize-api-generator",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "main": "src/index.js",
   "license": "MIT",
   "dependencies": {
@@ -13,6 +13,6 @@
     "sequelize": "^6.17.0"
   },
   "devDependencies": {
-    "eslint": "^8.11.0"
+    "eslint": "^8.29.0"
   }
 }
