@@ -132,7 +132,7 @@ const FastifySequelizeAPI = ({
   performUpdate = async (request, instance) => await instance.save(),
   performDestroy = async (request, instance) => await instance.destroy(),
 
-  // This is automatically wrapped in an `type: 'array'` if the response is a list.
+  // This is automatically wrapped in an `type: 'array'` if the response is an array.
   responseSchema = null,
 }) => {
   // console.assert(prefix, 'prefix is required.')
@@ -281,11 +281,8 @@ const FastifySequelizeAPI = ({
       },
       preHandler: _preHandler,
       async handler(request, reply) {
-        // build does not save
         const instance = await Model.build(request.body)
-
         await performCreate(request, instance)
-
         reply.code(201).send(instance)
       },
     })
