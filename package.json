@@ -11,8 +11,5 @@
   "peerDependencies": {
     "fastify": "^4.5.3",
     "sequelize": "^6.17.0"
-  },
-  "devDependencies": {
-    "eslint": "^8.29.0"
   }
 }

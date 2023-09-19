@@ -6,4 +6,4 @@ The package works by generating [JSON Schema](https://json-schema.org/) from the
 
 The project is inspired by the Django Rest Framework.
 
-## Example
+TypeScript should be introduced at some point.

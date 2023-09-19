@@ -1,13 +1,13 @@
-const sjs = require('sequelize-json-schema')
-const { camelCase, pascalCase } = require('change-case')
-const get = require('lodash.get')
+const sjs = require("sequelize-json-schema");
+const { camelCase, pascalCase } = require("change-case");
+const get = require("lodash.get");
 /**
  *
  * @param {*} Model
  * @param {(''|'post'|'patch')} variation
  */
-function FastifyGetSchemaName(Model, variation = '') {
-  return pascalCase(`${Model.name} ${variation}`)
+function FastifyGetSchemaName(Model, variation = "") {
+  return pascalCase(`${Model.name} ${variation}`);
 }
 
 /**
@@ -22,9 +22,9 @@ function FastifyGetSchemaName(Model, variation = '') {
  * @param {object} param0
  * @param {object} param0.fastify
  * @param {object} param0.Model
- * @param {object} param0.exclude
- * @param {object} param0.readOnly
- * @param {object} param0.writeOnly
+ * @param {string[]} param0.exclude
+ * @param {string[]} param0.readOnly
+ * @param {string[]} param0.writeOnly
  */
 function FastifyAddModelSchema({
   fastify,
@@ -33,13 +33,13 @@ function FastifyAddModelSchema({
   readOnly = [],
   writeOnly = [],
 }) {
-  const schemaNameOut = FastifyGetSchemaName(Model, '')
-  const schemaNamePost = FastifyGetSchemaName(Model, 'post')
-  const schemaNamePatch = FastifyGetSchemaName(Model, 'patch')
+  const schemaNameOut = FastifyGetSchemaName(Model, "");
+  const schemaNamePost = FastifyGetSchemaName(Model, "post");
+  const schemaNamePatch = FastifyGetSchemaName(Model, "patch");
 
-  const schemaGet = fastify.getSchema(schemaNameOut)
-  const schemaPost = fastify.getSchema(schemaNamePost)
-  const schemaPatch = fastify.getSchema(schemaNamePatch)
+  const schemaGet = fastify.getSchema(schemaNameOut);
+  const schemaPost = fastify.getSchema(schemaNamePost);
+  const schemaPatch = fastify.getSchema(schemaNamePatch);
 
   if (schemaGet && schemaPost && schemaPatch) {
     // already exists, do nothing
@@ -47,26 +47,26 @@ function FastifyAddModelSchema({
     const schema = sjs.getModelSchema(Model, {
       useRefs: false,
       exclude,
-    })
+    });
 
-    const _readOnly = ['id', 'createdAt', 'updatedAt', ...readOnly]
-    const _writeOnly = [...writeOnly]
+    const _readOnly = ["id", "createdAt", "updatedAt", ...readOnly];
+    const _writeOnly = [...writeOnly];
 
-    const outProperties = {}
-    const inProperties = {}
+    const outProperties = {};
+    const inProperties = {};
 
     Object.entries(schema.properties).forEach(([key, value]) => {
-      value.description = get(Model, ['fieldRawAttributesMap', key, 'comment'])
+      value.description = get(Model, ["fieldRawAttributesMap", key, "comment"]);
 
       if (!_readOnly.includes(key) && !writeOnly.includes(key)) {
-        outProperties[key] = value
-        inProperties[key] = value
+        outProperties[key] = value;
+        inProperties[key] = value;
       } else if (_readOnly.includes(key)) {
-        outProperties[key] = value
+        outProperties[key] = value;
       } else if (_writeOnly.includes(key)) {
-        inProperties[key] = value
+        inProperties[key] = value;
       }
-    })
+    });
 
     fastify.addSchema({
       ...schema,
@@ -75,7 +75,7 @@ function FastifyAddModelSchema({
       required: (schema.required ?? []).filter((item) =>
         Object.keys(outProperties).includes(item)
       ),
-    })
+    });
 
     fastify.addSchema({
       ...schema,
@@ -84,31 +84,32 @@ function FastifyAddModelSchema({
       required: (schema.required ?? []).filter((item) =>
         Object.keys(inProperties).includes(item)
       ),
-    })
+    });
 
     fastify.addSchema({
       ...schema,
       $id: schemaNamePatch,
       properties: inProperties,
       required: [],
-    })
+    });
   }
 }
 
 const FastifySequelizeGenericViews = Object.freeze({
-  ListAPIView: ['LIST'],
-  ListCreateAPIView: ['LIST', 'CREATE'],
-  RetrieveAPIView: ['RETRIEVE'],
-  CreateAPIView: ['CREATE'],
-  UpdateAPIView: ['UPDATE'],
-  RetrieveUpdateDestroyAPIView: ['RETRIEVE', 'UPDATE', 'DESTROY'],
-})
+  ListAPIView: ["LIST"],
+  ListCreateAPIView: ["LIST", "CREATE"],
+  RetrieveAPIView: ["RETRIEVE"],
+  CreateAPIView: ["CREATE"],
+  UpdateAPIView: ["UPDATE"],
+  RetrieveUpdateDestroyAPIView: ["RETRIEVE", "UPDATE", "DESTROY"],
+});
+
 /**
  *
  * @param {prefix} param0
  */
 const FastifySequelizeAPI = ({
-  prefix = '',
+  prefix = "",
   params = {}, // e.g., {id:'integer'}
   fastify,
   Model,
@@ -116,8 +117,8 @@ const FastifySequelizeAPI = ({
   preHandler = [],
   hasPermission = async (_request) => true,
   hasObjectPermission = async (_request, _instance) => true,
-  lookupField = 'id',
-  lookupUrlParam = 'id',
+  lookupField = "id",
+  lookupUrlParam = "id",
   getObject = async (request) =>
     Model.findOne({
       where: {
@@ -136,9 +137,9 @@ const FastifySequelizeAPI = ({
   responseSchema = null,
 }) => {
   // console.assert(prefix, 'prefix is required.')
-  console.assert(fastify, 'fastify instance is required.')
-  console.assert(Model, 'Model is required.')
-  console.assert(genericView, 'genericView is required.')
+  console.assert(fastify, "fastify instance is required.");
+  console.assert(Model, "Model is required.");
+  console.assert(genericView, "genericView is required.");
 
   const operationIdsResolved = {
     RETRIEVE: camelCase(`get ${Model.name}`),
@@ -148,16 +149,16 @@ const FastifySequelizeAPI = ({
     UPDATE_PUT: camelCase(`put ${Model.name}`),
     DESTROY: camelCase(`delete ${Model.name}`),
     ...operationIds,
-  }
+  };
 
   const descriptionsResolved = {
-    LIST: 'Fetch instances.',
-    RETRIEVE: 'Retrieve an instance.',
-    CREATE: 'Create a new instance.',
-    UPDATE: 'Update an instance.',
-    DESTROY: 'Destroy an instance.',
+    LIST: "Fetch instances.",
+    RETRIEVE: "Retrieve an instance.",
+    CREATE: "Create a new instance.",
+    UPDATE: "Update an instance.",
+    DESTROY: "Destroy an instance.",
     ...descriptions,
-  }
+  };
 
   // These fields are managed automatically and have no place in a create/update body.
   // const _excludeOnCreateUpdate = [
@@ -174,8 +175,8 @@ const FastifySequelizeAPI = ({
   // })
 
   const responseSchemaResolved = responseSchema ?? {
-    $ref: FastifyGetSchemaName(Model, ''),
-  }
+    $ref: FastifyGetSchemaName(Model, ""),
+  };
 
   // const postBodySchema = sjs.getModelSchema(Model, {
   //   useRefs: false,
@@ -183,15 +184,15 @@ const FastifySequelizeAPI = ({
   // })
 
   const postBodySchema = {
-    $ref: FastifyGetSchemaName(Model, 'post'),
-  }
+    $ref: FastifyGetSchemaName(Model, "post"),
+  };
 
-  const putBodySchema = { ...postBodySchema }
+  const putBodySchema = { ...postBodySchema };
 
   // shallow copy with `required` key removed
   const patchBodySchema = {
-    $ref: FastifyGetSchemaName(Model, 'patch'),
-  }
+    $ref: FastifyGetSchemaName(Model, "patch"),
+  };
 
   // in the patch variant already
   // delete patchBodySchema['required']
@@ -200,35 +201,35 @@ const FastifySequelizeAPI = ({
     ...preHandler,
     async (request, reply) => {
       if (await hasPermission(request)) {
-        if (['POST'].includes(request.method)) {
+        if (["POST"].includes(request.method)) {
           // pass
         } else if (request.params[lookupUrlParam]) {
-          const instance = await getObject(request)
+          const instance = await getObject(request);
 
           if (instance) {
             if (await hasObjectPermission(request, instance)) {
-              request.instance = instance
+              request.instance = instance;
             } else {
-              reply.code(403).send()
+              reply.code(403).send();
             }
           } else {
-            reply.code(404).send()
+            reply.code(404).send();
           }
         }
       } else {
-        reply.code(401).send()
+        reply.code(401).send();
       }
     },
-  ]
+  ];
 
   const _preHandlerList = [
     ..._preHandler,
     async (request, _reply) => {
-      request.instances = await getObjects(request)
+      request.instances = await getObjects(request);
     },
-  ]
+  ];
 
-  if (genericView.includes('RETRIEVE')) {
+  if (genericView.includes("RETRIEVE")) {
     fastify.get(prefix, {
       schema: {
         tags,
@@ -242,13 +243,13 @@ const FastifySequelizeAPI = ({
       },
       preHandler: _preHandler,
       async handler(request, reply) {
-        const instance = request.instance
-        reply.code(200).send(instance)
+        const instance = request.instance;
+        reply.code(200).send(instance);
       },
-    })
+    });
   }
 
-  if (genericView.includes('LIST')) {
+  if (genericView.includes("LIST")) {
     fastify.get(prefix, {
       schema: {
         tags,
@@ -256,18 +257,18 @@ const FastifySequelizeAPI = ({
         description: descriptionsResolved.LIST,
         params,
         response: {
-          200: { type: 'array', items: responseSchemaResolved },
+          200: { type: "array", items: responseSchemaResolved },
           403: {},
         },
       },
       preHandler: _preHandlerList,
       async handler(request, reply) {
-        reply.code(200).send(request.instances)
+        reply.code(200).send(request.instances);
       },
-    })
+    });
   }
 
-  if (genericView.includes('CREATE')) {
+  if (genericView.includes("CREATE")) {
     fastify.post(prefix, {
       schema: {
         tags,
@@ -281,14 +282,14 @@ const FastifySequelizeAPI = ({
       },
       preHandler: _preHandler,
       async handler(request, reply) {
-        const instance = await Model.build(request.body)
-        await performCreate(request, instance)
-        reply.code(201).send(instance)
+        const instance = await Model.build(request.body);
+        await performCreate(request, instance);
+        reply.code(201).send(instance);
       },
-    })
+    });
   }
 
-  if (genericView.includes('UPDATE')) {
+  if (genericView.includes("UPDATE")) {
     fastify.patch(prefix, {
       schema: {
         tags,
@@ -303,15 +304,15 @@ const FastifySequelizeAPI = ({
       preHandler: _preHandler,
 
       async handler(request, reply) {
-        const instance = request.instance
+        const instance = request.instance;
 
-        Object.assign(instance, request.body)
+        Object.assign(instance, request.body);
 
-        await performUpdate(request, instance)
+        await performUpdate(request, instance);
 
-        reply.code(200).send(instance)
+        reply.code(200).send(instance);
       },
-    })
+    });
 
     fastify.put(prefix, {
       schema: {
@@ -327,18 +328,18 @@ const FastifySequelizeAPI = ({
       preHandler: _preHandler,
 
       async handler(request, reply) {
-        const instance = request.instance
+        const instance = request.instance;
 
-        Object.assign(instance, request.body)
+        Object.assign(instance, request.body);
 
-        await performUpdate(request, instance)
+        await performUpdate(request, instance);
 
-        reply.code(200).send(instance)
+        reply.code(200).send(instance);
       },
-    })
+    });
   }
 
-  if (genericView.includes('DESTROY')) {
+  if (genericView.includes("DESTROY")) {
     fastify.delete(prefix, {
       schema: {
         tags,
@@ -352,21 +353,21 @@ const FastifySequelizeAPI = ({
       preHandler: _preHandler,
 
       async handler(request, reply) {
-        const instance = request.instance
+        const instance = request.instance;
         try {
-          await performDestroy(request, instance)
-          reply.code(200).send()
+          await performDestroy(request, instance);
+          reply.code(200).send();
         } catch (e) {
-          reply.code(400).send(e)
+          reply.code(400).send(e);
         }
       },
-    })
+    });
   }
-}
+};
 
 module.exports = {
   FastifyAddModelSchema,
   FastifySequelizeGenericViews,
   FastifySequelizeAPI,
   FastifyGetSchemaName,
-}
+};
