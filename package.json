@@ -1,6 +1,6 @@
 {
   "name": "@chriscdn/fastify-sequelize-api-generator",
-  "version": "0.0.7",
+  "version": "0.0.9",
   "main": "src/index.js",
   "repository": {
     "type": "git",
