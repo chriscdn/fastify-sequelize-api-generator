@@ -2,6 +2,10 @@
   "name": "@chriscdn/fastify-sequelize-api-generator",
   "version": "0.0.6",
   "main": "src/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chriscdn/fastify-sequelize-api-generator.git"
+  },
   "license": "MIT",
   "dependencies": {
     "change-case": "^4.1.2",
