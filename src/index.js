@@ -2,13 +2,11 @@ const sjs = require("sequelize-json-schema");
 const { camelCase, pascalCase } = require("change-case");
 const get = require("lodash.get");
 /**
- *
  * @param {*} Model
  * @param {(''|'post'|'patch')} variation
  */
-function FastifyGetSchemaName(Model, variation = "") {
-  return pascalCase(`${Model.name} ${variation}`);
-}
+const FastifyGetSchemaName = (Model, variation = "") =>
+  pascalCase(`${Model.name} ${variation}`);
 
 /**
  * This adds three schemas to the fastify instance:
@@ -26,13 +24,13 @@ function FastifyGetSchemaName(Model, variation = "") {
  * @param {string[]} param0.readOnly
  * @param {string[]} param0.writeOnly
  */
-function FastifyAddModelSchema({
+const FastifyAddModelSchema = ({
   fastify,
   Model,
   exclude = [],
   readOnly = [],
   writeOnly = [],
-}) {
+}) => {
   const schemaNameOut = FastifyGetSchemaName(Model, "");
   const schemaNamePost = FastifyGetSchemaName(Model, "post");
   const schemaNamePatch = FastifyGetSchemaName(Model, "patch");
@@ -56,6 +54,16 @@ function FastifyAddModelSchema({
     const inProperties = {};
 
     Object.entries(schema.properties).forEach(([key, value]) => {
+      if (!value.type) {
+        value.type = "object";
+        value.additionalProperties = true;
+      }
+
+      if (Array.isArray(value.type)) {
+        value.type = value.type[0];
+        value.nullable = value.type[1] === "null";
+      }
+
       value.description = get(Model, ["fieldRawAttributesMap", key, "comment"]);
 
       if (!_readOnly.includes(key) && !writeOnly.includes(key)) {
@@ -93,7 +101,7 @@ function FastifyAddModelSchema({
       required: [],
     });
   }
-}
+};
 
 const FastifySequelizeGenericViews = Object.freeze({
   ListAPIView: ["LIST"],
@@ -105,7 +113,6 @@ const FastifySequelizeGenericViews = Object.freeze({
 });
 
 /**
- *
  * @param {prefix} param0
  */
 const FastifySequelizeAPI = ({
