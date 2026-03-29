@@ -1,19 +1,33 @@
 {
   "name": "@chriscdn/fastify-sequelize-api-generator",
   "version": "0.0.10",
-  "main": "src/index.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/chriscdn/fastify-sequelize-api-generator.git"
   },
   "license": "MIT",
+  "type": "module",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "exports": "./lib/index.js",
+  "scripts": {
+    "build": "tsup",
+    "watch": "yarn build --watch",
+    "test": "vitest"
+  },
   "dependencies": {
-    "change-case": "^4.1.2",
+    "change-case": "^5.4.4",
     "lodash.get": "^4.4.2",
     "sequelize-json-schema": "^2.1.1"
   },
-  "peerDependencies": {
-    "fastify": "^4.5.3",
-    "sequelize": "^6.17.0"
+  "devDependencies": {
+    "@tsconfig/strictest": "^2.0.8",
+    "@types/json-schema": "^7.0.15",
+    "@types/lodash.get": "^4.4.9",
+    "fastify": "^5.8.4",
+    "json-schema": "^0.4.0",
+    "sequelize": "^6.37.8",
+    "tsup": "^8.5.1",
+    "typescript": "5"
   }
 }
