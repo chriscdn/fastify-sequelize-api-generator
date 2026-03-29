@@ -1,6 +1,6 @@
 {
   "name": "@chriscdn/fastify-sequelize-api-generator",
-  "version": "0.0.10",
+  "version": "1.0.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/chriscdn/fastify-sequelize-api-generator.git"
