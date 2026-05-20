@@ -263,6 +263,8 @@ const FastifySequelizeAPI = <I extends Model, L extends Model = I>({
           } else {
             return reply.code(404).send();
           }
+        } else {
+          // there is a use case that lands here
         }
       } else {
         return reply.code(401).send();
